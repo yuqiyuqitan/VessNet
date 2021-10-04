@@ -17,12 +17,12 @@ zarrname='sample_data.zarr'
 #set manual seed
 torch.manual_seed(888)
 
-def train(iteration, batch_size, model, loss):
+def train(raw_dataset, iteration, batch_size, model, loss):
     #hard set voxel_size
     voxel_size = gp.Coordinate((5, 1, 1))
     #set inpust size in voxel
     input_size = gp.Coordinate((20,100,100) * voxel_size)
-    output_size = gp.Coordinate((4,12,12) * voxel_size)
+    output_size = gp.Coordinate((20,100,100) * voxel_size)
 
     #how much to pad
     context = (input_size - output_size)/2
@@ -32,21 +32,24 @@ def train(iteration, batch_size, model, loss):
     pred = gp.ArrayKey('PRED')
     gt = gp.ArrayKey('GT')
     mask = gp.ArrayKey('MASK')
-
+    
     #request certain shape of the data
     request=gp.BatchRequest()
     request.add(raw, input_size)
-    request.add(mask, output_size)
-    request.add(gt, output_size)
     request.add(pred, output_size)
+    request.add(gt, output_size)
+    request.add(mask, output_size)
     
     print("Load data")
     source = tuple(gp.ZarrSource(
-            zarr_name,  # the zarr container
+            raw_dataset,  # the zarr container
             {raw: 'raw'},  # which dataset to associate to the array key
             {raw: gp.ArraySpec(interpolatable=True), },  # meta-information
-            {gt: 'ground_truth'},
-            {gt: gp.ArraySpec(interpolatable=True)}) +
+            {gt: 'gt'},
+            {gt: gp.ArraySpec(interpolatable=False)},
+            {mask: 'gt'},
+            {mask: gp.ArraySpec(interpolatable=False)}) +
+            
             #add pad here
             gp.Pad(raw, None) +
             gp.Pad(gt, context) +
