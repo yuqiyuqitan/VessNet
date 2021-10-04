@@ -2,6 +2,8 @@
 import numpy as np
 import h5py
 import os
+
+from numpy.core.shape_base import vstack
 import zarr
 import gunpowder as gp
 
@@ -16,23 +18,25 @@ file_gt = h5py.File(os.path.join(path,fname_gt), 'r')
 raw_gt = np.array(file_gt['im'])
 
 # padding if the data z < 20, add padding on z 
-
-# create a mask to record this padding
+if raw_data.shape[0] < 20:
+    pad = np.zeros((20-raw_data[0], raw_data[1], raw_data[2]))
+    raw_data = np.vstack(raw_data, pad)
+    raw_gt = np.vstack(raw_gt, pad)
+    # create a mask to record this padding
+    pad_mask = np.ones((raw_data[0], raw_data[1], raw_data[2]))
+    raw_mask = np.vstack(pad_mask, pad)
 
 #splitby the x, y axis 50%, 25%, 25% into train, test, val
 
-#store image in zarr container
+
 f = zarr.open(zarr_name, 'w')
 f['raw'] = raw_data
 f['raw'].attrs['resolution'] = (5,1,1)
-f['ground_truth'] = raw_gt
-f['ground_truth'].attrs['resolution'] = (5,1,1)
+f['gt'] = raw_gt
+f['gt'].attrs['resolution'] = (5,1,1)
+f['mask'] = raw_mask
 
-
-
-
-
-#random cropping along x y so that 50% train, 25% val, 25% test
-
-
-#need to pad for z for some images
+#store image in zarr container
+#train/raw + gt
+#test/raw + gt
+#val/raw + gt

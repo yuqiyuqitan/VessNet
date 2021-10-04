@@ -78,6 +78,10 @@ class Train(GenericTrain):
         spawn_subprocess (``bool``, optional):
         
             Whether to run the ``train_step`` in a separate process. Default is false.
+
+        show_log_im (``bool``, optional):
+
+            Whether to show img on tensorboard or not. Default is false.
     """
 
     def __init__(
@@ -95,6 +99,7 @@ class Train(GenericTrain):
         log_dir: str = None,
         log_every: int = 1,
         spawn_subprocess: bool = False,
+        show_log_im: bool = False
     ):
 
         if not model.training:
