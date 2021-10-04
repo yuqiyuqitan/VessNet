@@ -1,8 +1,9 @@
 import zarr
 import gunpowder as gp
 import torch
+import os
 
-def predict(model, raw_dataset, outfile, eval=True, output_dir = '.', raw_ak_name='raw'):
+def predict(model, raw_dataset, out_fname = 'predict.hdf5', eval=True, output_dir = '.', raw_ak_name='raw'):
     
     model.eval()
 
@@ -64,13 +65,25 @@ def predict(model, raw_dataset, outfile, eval=True, output_dir = '.', raw_ak_nam
         }
     )
 
+
+    #save data
+    pipeline += gp.Hdf5Write(
+        {
+            pred: 'volumes/pred'
+        },
+        output_filename = os.join.Path(output_dir, out_fname),
+        compression_type = 'gzip'
+    )
+
+    #save how much time was spent
     request = gp.BatchRequest()
     #request[raw] = gp.Roi((0, 0), im_size)
     request[pred] = gp.Roi((0, 0), im_size)
+
+    #iterate through the whole dataset
+    pipeline += gp.Scan(reference = request)
 
     with gp.build(pipeline):
         batch = pipeline.request_batch(request)
         if eval:
             pass #get metrics to compute, remember masks
-
-    #save data

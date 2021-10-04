@@ -117,12 +117,13 @@ def train(raw_dataset, iteration, batch_size, model, loss):
     #for loss function
     #remember to mask the padded area when calculating the loss function
 
+    #how to store the model?
+
     print("Training for", iteration, "iterations")
     with gp.build(pipeline) :
         for i in range(iteration):
             batch = pipeline.request_batch(request)
 
     print("Finished")
-
 
     
