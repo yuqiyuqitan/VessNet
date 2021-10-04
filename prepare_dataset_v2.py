@@ -1,0 +1,42 @@
+#prepare dataset
+import numpy as np
+import h5py
+import os
+
+from numpy.core.shape_base import vstack
+import zarr
+import gunpowder as gp
+
+path = "/mnt/efs/woods_hole/danceParty/tiff_images/02_h5/"
+fname_raw = 'image/01_HaftJavaherian_DeepVess2018_training_1.hdf5'
+fname_gt = 'label/01_HaftJavaherian_DeepVess2018_training_1.hdf5'
+zarr_name = 'sample_data.zarr'
+#read in data from h5 file
+file_raw = h5py.File(os.path.join(path,fname_raw), 'r')
+raw_data = np.array(file_raw['im']) #is this z, y, x?
+file_gt = h5py.File(os.path.join(path,fname_gt), 'r')
+raw_gt = np.array(file_gt['im'])
+
+# padding if the data z < 20, add padding on z 
+if raw_data.shape[0] < 20:
+    pad = np.zeros((20-raw_data[0], raw_data[1], raw_data[2]))
+    raw_data = np.vstack(raw_data, pad)
+    raw_gt = np.vstack(raw_gt, pad)
+    # create a mask to record this padding
+    pad_mask = np.ones((raw_data[0], raw_data[1], raw_data[2]))
+    raw_mask = np.vstack(pad_mask, pad)
+
+#splitby the x, y axis 50%, 25%, 25% into train, test, val
+
+
+f = zarr.open(zarr_name, 'w')
+f['raw'] = raw_data
+f['raw'].attrs['resolution'] = (5,1,1)
+f['gt'] = raw_gt
+f['gt'].attrs['resolution'] = (5,1,1)
+f['mask'] = raw_mask
+
+#store image in zarr container
+#train/raw + gt
+#test/raw + gt
+#val/raw + gt
