@@ -320,11 +320,12 @@ class Train(GenericTrain):
 
         if self.summary_writer and batch.iteration % self.log_every == 0:
             self.summary_writer.add_scalar("loss", batch.loss, batch.iteration)
-            for name, ak1, ak2 in self.inputs.items():
-                self.summary_writer.add_images(tag=name, img_tensor = batch.arrays[ak1].to("cpu"), global_step=batch.iteration) #how to drop the 3rd dimension
-                self.summary_writer.add_images(tag = 'target', img_tensor = batch.arrays[ak2].to("cpu"), global_step = batch.iteration) 
-            for name, ak in self.output.items():
-                self.summary_writer.add_images(tag = 'prediction', img_tensor = self.outputs.items().to("cpu").detach(), global_step = batch.iteration)
+            for name, key in self.inputs.items():
+                self.summary_writer.add_images(tag=name, img_tensor = np.squeeze(batch.arrays[key].data[...,3,:,:]), global_step=batch.iteration) #how to drop the 3rd dimension
+            for name, key in self.loss_inputs.items():
+                self.summary_writer.add_images(tag = name, img_tensor = np.squeeze(batch.arrays[key].data[...,3,:,:]), global_step = batch.iteration) 
+            for name, key in self.output.items():
+                self.summary_writer.add_images(tag = name, img_tensor = np.squeeze(batch.arrays[key].data[...,3,:,:]), global_step = batch.iteration)
 
     def __collect_requested_outputs(self, request):
 
