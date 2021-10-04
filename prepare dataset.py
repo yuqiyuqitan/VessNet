@@ -1,4 +1,6 @@
 #prepare dataset
+import re
+import neuroglancer
 import numpy as np
 import h5py
 import os
@@ -30,15 +32,16 @@ else:
     raw_mask = np.ones((raw_data.shape[0], raw_data.shape[1], raw_data.shape[2]), dtype='uint8')
 #splitby the x, y axis 50%, 25%, 25% into train, test, val
 
+resolution = [5,1,1]
+offset = [0,]*3
 
-f = zarr.open(zarr_name, 'w')
-f['raw'] = raw_data
-f['raw'].attrs['resolution'] = (5,1,1)
-f['gt'] = raw_gt
-f['gt'].attrs['resolution'] = (5,1,1)
-f['mask'] = raw_mask
-f['mask'].attrs['resolution'] = (5,1,1)
-#store image in zarr container
-#train/raw + gt
-#test/raw + gt
-#val/raw + gt
+f = zarr.open(zarr_name, 'a')
+
+for ds_name, data in [
+    ('raw', raw_data),
+    ('gt', raw_gt),
+    ('mask', raw_mask)]:
+
+    f[ds_name] = data
+    f[ds_name].attrs['offset'] = offset
+    f[ds_name].attrs['resolution'] = resolution
