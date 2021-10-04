@@ -22,7 +22,7 @@ def train(iteration, batch_size, model, loss):
     voxel_size = gp.Coordinate((5, 1, 1))
     #set inpust size in voxel
     input_size = gp.Coordinate((20,100,100) * voxel_size)
-    output_size = gp.Coordinate((12,12,4) * voxel_size)
+    output_size = gp.Coordinate((4,12,12) * voxel_size)
 
     #how much to pad
     context = (input_size - output_size)/2
@@ -36,48 +36,56 @@ def train(iteration, batch_size, model, loss):
     #request certain shape of the data
     request=gp.BatchRequest()
     request.add(raw, input_size)
+    request.add(mask, output_size)
     request.add(gt, output_size)
+    request.add(pred, output_size)
     
-    source = gp.ZarrSource(
+    source = tuple(gp.ZarrSource(
             zarr_name,  # the zarr container
             {raw: 'raw'},  # which dataset to associate to the array key
             {raw: gp.ArraySpec(interpolatable=True), },  # meta-information
             {gt: 'ground_truth'},
-            {gt: gp.ArraySpec(interpolatable=True)} +
+            {gt: gp.ArraySpec(interpolatable=True)}) +
             #add pad here
-            gp.Pad(raw, context)
-
+            gp.Pad(raw, None) +
+            gp.Pad(gt, context) +
+            gp.Pad(mask, context) +
+            # create random location
+            gp.RandomLocation()
         )
-    # create "pipeline" consisting only of a data source
-    pipeline = source
-
     #rotation augmentation
-    pipeline += gp.ElasticAugment(
-        [5,1,1],
-        [0,2,2],
+    elastic_augment = gp.ElasticAugment(
+        [2,10,10], 
+        0, #potentially add elastic deformation?
         [0,math.pi/2.0],
-        prob_slip=0.05,
-        prob_shift=0.05,
-        max_misalign=25,
-        spatial_dims = 2
+        prob_slip=0,
+        prob_shift=0,
+        max_misalign=0,
+        spatial_dims=2
     ) 
 
     #fliping augmentation
-    pipeline += gp.SimpleAugment([1,2]) 
-    
+    simple_augmentation = gp.SimpleAugment([1,2],[1,2])
+
     #intensity augumentation
-    pipeline =+ gp.IntensityAugment(
+    intensity_augmentation = gp.IntensityAugment(
     raw,
     scale_min=0.9,
     scale_max=1.1,
     shift_min=-0.1,
     shift_max=0.1,
-    z_section_wise=True)
-
+    z_section_wise=False)
+    
     #noise aumentation 
-    pipeline =+ gp.NoiseAugment(
+    noise_augment = gp.NoiseAugment(
         raw
     )
+    
+    #scale augumentation (resolution)
+
+
+    #complete the augmentation
+    pipeline = source + simple_augmentation + intensity_augmentation + noise_augment
 
     #stack batch size
     pipeline += gp.Stack(batch_size)
@@ -88,7 +96,7 @@ def train(iteration, batch_size, model, loss):
         loss,
         optimizer = torch.optim.Adam(model.parameters()),
         inputs = {
-            'input': raw
+            'input': raw,
         },
         loss_inputs = {
             0: pred,
@@ -101,9 +109,6 @@ def train(iteration, batch_size, model, loss):
 
     #for loss function
     #remember to mask the padded area when calculating the loss function
-
-    #add prediction to the request
-    request[pred] = gp.Roi(output_size * voxel_size) #not sure what to put in there
 
     with gp.build(pipeline) :
         batch = pipeline.request_batch(request)
