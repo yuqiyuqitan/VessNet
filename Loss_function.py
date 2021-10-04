@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[2]:
 
 
 import torch
@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-# In[ ]:
+# In[3]:
 
 
 assert torch.cuda.is_available()
@@ -61,7 +61,10 @@ class WeightedDiceCoefficient(nn.Module):
 # In[ ]:
 
 
-BCEloss = WeightedBCELoss()
-Diceloss = WeightedDiceCoefficient()
-loss = BCEloss(prediction, groundtruth, weight_mask) + Diceloss(prediction, groundtruth, weight_mask)
+def loss(self, prediction, groundtruth, weight_mask):
+    BCEloss = WeightedBCELoss()
+    Diceloss = WeightedDiceCoefficient()
+    loss = BCEloss (prediction = prediction, groundtruth = y, weight_mask=weight_mask)
+           + Diceloss (prediction = prediction, groundtruth = y, weight_mask=weight_mask)
+    return loss
 
