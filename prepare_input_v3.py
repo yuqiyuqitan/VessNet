@@ -23,7 +23,7 @@ def prepare_input(input_fname, output_fname, output_dir="."):
 	#save as h5 formate 
 	save_path = os.path.join(output_dir, output_fname) + '.hdf5'
 	hf = h5py.File(save_path, 'a')
-	dset = hf.create_dataset('im', data=im_new, dtype='uint8')
+	dset = hf.create_dataset('im', data=im_new, dtype='float32')
 	hf.close()
 
 if __name__ == "__main__":
