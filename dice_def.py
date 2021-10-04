@@ -19,9 +19,12 @@ class DiceCoefficient(nn.Module):
         return (2 * intersection / denominator.clamp(min=self.eps))
 
 
-# Give it validation data as DataLoader class
+# Give it data as DataLoader class for now, but this will change because gunpowder
 
-def getDiceCoefficient(model, loader):
+dice_metric = DiceCoefficient()
+
+# Returns a dictionary with average metrics with the keys: 'dice'
+def Getmetrics(model, loader, dice_metric):
     # reinitializing metric values
     val_metric = 0
     # disable gradients during validation
@@ -29,17 +32,17 @@ def getDiceCoefficient(model, loader):
         for x, y in loader:
             x, y = x.to(device), y.to(device)
             prediction = model(x)
-            val_metric += metric(prediction, y).item()
+            val_metric += dice_metric(prediction, y).item()
     
     val_metric /= len(loader)
-    return val_metric
-
-'''
+    metrics_are = {'dice': val_metric}
+    return metrics_are
+"""
 Usage:
 net <- is defined already
-data_is <- is defined already
+data_is <- is defined already, not sure yet what method will be used to make a data loader
 
-loader_is = DataLoader(data_is, batch_size=5)
-getDiceCoefficient(net, loader_is)
-'''
+loader_is = DataLoader(data_is, batch_size=5), won't be used because gunpowder
+Getmetrics(net, loader_is, dice_metric)
+"""
 
