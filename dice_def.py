@@ -18,6 +18,8 @@ class DiceCoefficient(nn.Module):
         denominator = (prediction * prediction).sum() + (target * target).sum()
         return (2 * intersection / denominator.clamp(min=self.eps))
 
+    
+# EvaluateSegmentation truth.nii segment.nii –use all  -thd 0.5  
 
 # Give it data as DataLoader class for now, but this will change because gunpowder
 
