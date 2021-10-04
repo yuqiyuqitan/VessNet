@@ -1,5 +1,11 @@
 from torch.utils.data import Dataset, DataLoader
 
+import itk
+import sys
+from skimage import metrics
+import matplotlib.pyplot as plt
+import numpy as np
+
 assert torch.cuda.is_available()
 device = torch.device("cuda")
 
@@ -24,20 +30,55 @@ class DiceCoefficient(nn.Module):
 # Give it data as DataLoader class for now, but this will change because gunpowder
 
 dice_metric = DiceCoefficient()
+# metrics.hausdorff_distance(coords_a, coords_b)
+
+# Average hausdorff distance
+# Balanced average hausdorff distance
 
 # Returns a dictionary with average metrics with the keys: 'dice'
 def Getmetrics(model, loader, dice_metric):
     # reinitializing metric values
-    val_metric = 0
+    dice_is = 0
+    hausdorff_distance_is = 0
     # disable gradients during validation
     with torch.no_grad():
         for x, y in loader:
             x, y = x.to(device), y.to(device)
             prediction = model(x)
-            val_metric += dice_metric(prediction, y).item()
+#             print(x.shape, y.shape, prediction.shape)
+            dice_is += dice_metric(prediction, y).item() #adds all dice together
     
-    val_metric /= len(loader)
-    metrics_are = {'dice': val_metric}
+#             Hard coded 0.5 threshold
+            prediction_binary = prediction.cpu() > 0.5
+            y_binary = y.cpu() > 0.5
+#             print(prediction_binary.shape)
+#             print(prediction_binary.shape, y.cpu().shape)
+#             print(y[(0,0,0,0)])
+
+            if len(x) == 0:
+                print("Error x len: ", len(x), ", y len: ", len(y))
+                continue
+            elif len(y) == 0:
+                print("Error x len: ", len(x), ", y len: ", len(y))
+                continue
+            
+            prediction_binary = prediction_binary.numpy()
+            y_binary = y_binary.numpy()
+            prediction_binary_nonzero_len = len(np.transpose(np.nonzero(prediction_binary)))
+            b_points_nonzero_len = len(np.transpose(np.nonzero(y_binary)))
+            
+            if prediction_binary_nonzero_len == 0 or b_points_nonzero_len == 0:
+                print("Inf avoided for hausdorff_distance")
+                continue
+    
+            hausdorff_distance_is += metrics.hausdorff_distance(prediction_binary, y_binary) # adds all hausdorff together
+            #             print(hausdorff_distance_is)
+    
+#     print("Distance is: ",hausdorff_distance_is, len(loader))
+    dice_is /= len(loader) # gets mean dice
+    hausdorff_distance_is /= len(loader) #computes mean hausdorff
+    
+    metrics_are = {'dice': dice_is, 'hausdorff' : hausdorff_distance_is}
     return metrics_are
 """
 Usage:
