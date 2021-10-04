@@ -1,5 +1,8 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
 # helper function to show image(s), channels first
-def imshow(raw, ground_truth=None, prediction=None):
+def imshow(raw, ground_truth=None, prediction=None, name="plot.png"):
   rows = 1
   if ground_truth is not None:
     rows += 1
@@ -26,4 +29,4 @@ def imshow(raw, ground_truth=None, prediction=None):
     else:
       for i, gt in enumerate(prediction):
         axes[row][i].imshow(gt[0])
-  plt.show()
+  plt.savefig(name)

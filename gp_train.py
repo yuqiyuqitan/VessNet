@@ -13,30 +13,20 @@ import gunpowder as gp
 from gunpowder.torch import Train
 import math
 
-raw_dataset = "sample_data.zarr"
-# set manual seed
-torch.manual_seed(888)
 
-
-def train(model, raw_dataset, iteration, batch_size, loss):
-
+def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, voxel_size = gp.Coordinate((5, 1, 1)), train = False, save_every=5, iteration = 10, batch_size=5):
     # set the model to be in the training mode
-    model.train()
+    if train:
+        model.train()
 
-    # hard set voxel_size
-    voxel_size = gp.Coordinate((5, 1, 1))
-    # set inpust size in voxel
-    input_size = gp.Coordinate((20, 128, 128)) * voxel_size
-    output_size = gp.Coordinate((20, 128, 128)) * voxel_size
-
-    # how much to pad
-    context = (input_size - output_size) / 2
-
+    input_size = input_size * voxel_size
+    output_size = output_size * voxel_size
     # extract data
     raw = gp.ArrayKey("RAW")
     pred = gp.ArrayKey("PRED")
     gt = gp.ArrayKey("GT")
     mask = gp.ArrayKey("MASK")
+    context = (input_size - output_size) / 2
 
     # request certain shape of the data
     request = gp.BatchRequest()
@@ -46,19 +36,25 @@ def train(model, raw_dataset, iteration, batch_size, loss):
     request.add(mask, output_size)
 
     print("Load data")
-    source = tuple(
-        gp.ZarrSource(
-            raw_dataset,  # the zarr container
-            {raw: "raw",
+    source = gp.ZarrSource(
+        raw_data,  # the zarr container
+        {
+            raw: "raw",
             gt: "gt",
-            mask: 'mask'},  # which dataset to associate to the array key
-            {raw: gp.ArraySpec(interpolatable=True),  # meta-information
+            mask: "mask",
+        },  # which dataset to associate to the array key
+        {
+            raw: gp.ArraySpec(interpolatable=True),  # meta-information
             gt: gp.ArraySpec(interpolatable=False),
-            mask: gp.ArraySpec(interpolatable=False)})
-        + gp.Pad(raw, None)         # add pad here
+            mask: gp.ArraySpec(interpolatable=False)
+        },
+    )
+
+    source += (
+        gp.Pad(raw, None)
         + gp.Pad(gt, context)
         + gp.Pad(mask, context)
-        + gp.RandomLocation() # create random location
+        + gp.RandomLocation()  # create random location
     )
 
     print("Start augmentation")
@@ -89,35 +85,31 @@ def train(model, raw_dataset, iteration, batch_size, loss):
     # noise aumentation
     noise_augment = gp.NoiseAugment(raw)
 
-    # scale augumentation (resolution)
+    # scale augumentation (resolution) ? 
 
     # complete the augmentation
     pipeline = source + simple_augmentation + intensity_augmentation + noise_augment
 
     # stack batch size
     pipeline += gp.Stack(batch_size)
+    if train:
+        print("Start training")
+        # training loop
+        pipeline += Train(
+            model,
+            loss,
+            optimizer=torch.optim.Adam(model.parameters()),
+            inputs={
+                "input": raw,
+            },
+            loss_inputs={0: pred, 1: gt},
+            outputs={0: pred},
+        )
+    else:    
+        pipeline += gp.Snapshot(
+            dataset_names = {raw: "raw_aug", gt: "gt_aug"},
+            output_filename = 'batch_{id}.zarr'
+        )
 
-    print("Start training")
-    # training loop
-    pipeline += Train(
-        model,
-        loss,
-        optimizer=torch.optim.Adam(model.parameters()),
-        inputs={
-            "input": raw,
-        },
-        loss_inputs={0: pred, 1: gt},
-        outputs={0: pred},
-    )
+    return pipeline
 
-    # for loss function
-    # remember to mask the padded area when calculating the loss function
-
-    # how to store the model?
-
-    print("Training for", iteration, "iterations")
-    with gp.build(pipeline):
-        for i in range(iteration):
-            batch = pipeline.request_batch(request)
-
-    print("Finished")

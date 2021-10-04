@@ -1,16 +1,27 @@
 from torch.utils.tensorboard import SummaryWriter
 import torch
-from torch.utils.tensorboard import tensorboard
-from VessNet import .
+import gunpowder as gp
+from gp_train import get_pipeline
+from imshow import imshow
 
-#load data
+raw_dataset = "sample_data.zarr"
+# set manual seed
+# torch.manual_seed(888)
 
-#put model here
+# hard set voxel_size
+voxel_size = gp.Coordinate((5, 1, 1))
+# set inpust size in voxel
+input_size = gp.Coordinate((20, 128, 128))
+output_size = gp.Coordinate((20, 128, 128))
 
-tb_logger = SummaryWriter() #set a folder in git repo
+raw = gp.ArrayKey("RAW")
+gt = gp.ArrayKey("GT")
 
-step = 0
-while step < num_epochs:
-    train(net, loader, optimizer, loss_function, tb_logger, activation) #populate
-    
-    validate(net, loader, optimizer, loss_function, tb_logger, activation)
+pipeline = get_pipeline(raw_data = raw_dataset, input_size = input_size, output_size = output_size, train=False)
+
+request = gp.BatchRequest()
+request.add(raw, input_size * voxel_size)
+request.add(gt, output_size * voxel_size)
+
+with gp.build(pipeline):
+    batch = pipeline.request_batch(request)

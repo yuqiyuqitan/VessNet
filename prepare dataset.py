@@ -2,7 +2,6 @@
 import numpy as np
 import h5py
 import os
-
 from numpy.core.shape_base import vstack
 import zarr
 import gunpowder as gp
@@ -13,19 +12,21 @@ fname_gt = 'label/01_HaftJavaherian_DeepVess2018_training_1.hdf5'
 zarr_name = 'sample_data.zarr'
 #read in data from h5 file
 file_raw = h5py.File(os.path.join(path,fname_raw), 'r')
-raw_data = np.array(file_raw['im']) #is this z, y, x?
+raw_data = np.array(file_raw['im'])
 file_gt = h5py.File(os.path.join(path,fname_gt), 'r')
 raw_gt = np.array(file_gt['im'])
+raw_gt = raw_gt.astype('uint8')
 
 # padding if the data z < 20, add padding on z 
 if raw_data.shape[0] < 20:
-    pad = np.zeros((20-raw_data[0], raw_data[1], raw_data[2]))
+    pad = np.zeros((20-raw_data.shape[0], raw_data.shape[1], raw_data.shape[2]))
     raw_data = np.vstack(raw_data, pad)
     raw_gt = np.vstack(raw_gt, pad)
     # create a mask to record this padding
-    pad_mask = np.ones((raw_data[0], raw_data[1], raw_data[2]))
+    pad_mask = np.ones((raw_data.shape[0], raw_data.shape[1], raw_data.shape[2]), dtype='uint8')
     raw_mask = np.vstack(pad_mask, pad)
-
+else:
+    raw_mask = np.ones((raw_data.shape[0], raw_data.shape[1], raw_data.shape[2]), dtype='uint8')
 #splitby the x, y axis 50%, 25%, 25% into train, test, val
 
 
@@ -35,7 +36,7 @@ f['raw'].attrs['resolution'] = (5,1,1)
 f['gt'] = raw_gt
 f['gt'].attrs['resolution'] = (5,1,1)
 f['mask'] = raw_mask
-
+f['mask'].attrs['resolution'] = (5,1,1)
 #store image in zarr container
 #train/raw + gt
 #test/raw + gt
