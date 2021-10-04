@@ -40,6 +40,7 @@ def train(iteration, batch_size, model, loss):
     request.add(gt, output_size)
     request.add(pred, output_size)
     
+    print("Load data")
     source = tuple(gp.ZarrSource(
             zarr_name,  # the zarr container
             {raw: 'raw'},  # which dataset to associate to the array key
@@ -53,6 +54,8 @@ def train(iteration, batch_size, model, loss):
             # create random location
             gp.RandomLocation()
         )
+
+    print("Start augmentation")
     #rotation augmentation
     elastic_augment = gp.ElasticAugment(
         [2,10,10], 
@@ -90,6 +93,7 @@ def train(iteration, batch_size, model, loss):
     #stack batch size
     pipeline += gp.Stack(batch_size)
 
+    print("Start training")
     #training loop
     pipeline += Train(
         model,
@@ -110,8 +114,12 @@ def train(iteration, batch_size, model, loss):
     #for loss function
     #remember to mask the padded area when calculating the loss function
 
+    print("Training for", iteration, "iterations")
     with gp.build(pipeline) :
-        batch = pipeline.request_batch(request)
+        for i in range(iteration):
+            batch = pipeline.request_batch(request)
+
+    print("Finished")
 
 
-
+    
