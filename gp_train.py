@@ -17,7 +17,11 @@ zarrname='sample_data.zarr'
 #set manual seed
 torch.manual_seed(888)
 
-def train(raw_dataset, iteration, batch_size, model, loss):
+def train(model, raw_dataset, iteration, batch_size, loss):
+
+    #set the model to be in the training mode
+    model.train()
+    
     #hard set voxel_size
     voxel_size = gp.Coordinate((5, 1, 1))
     #set inpust size in voxel

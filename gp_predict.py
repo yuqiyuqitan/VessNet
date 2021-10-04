@@ -4,7 +4,7 @@ import torch
 import os
 
 def predict(model, raw_dataset, out_fname = 'predict.hdf5', eval=True, output_dir = '.', raw_ak_name='raw'):
-    
+    #set the model in evaluation mode
     model.eval()
 
     #create keys to keep track of the data
