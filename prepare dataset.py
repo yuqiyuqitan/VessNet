@@ -23,8 +23,9 @@ if raw_data.shape[0] < 20:
     raw_data = np.vstack(raw_data, pad)
     raw_gt = np.vstack(raw_gt, pad)
     # create a mask to record this padding
+    pad2 = np.zeros((20-raw_data.shape[0], raw_data.shape[1], raw_data.shape[2]), dtype='uint8')
     pad_mask = np.ones((raw_data.shape[0], raw_data.shape[1], raw_data.shape[2]), dtype='uint8')
-    raw_mask = np.vstack(pad_mask, pad)
+    raw_mask = np.vstack(pad_mask, pad2)
 else:
     raw_mask = np.ones((raw_data.shape[0], raw_data.shape[1], raw_data.shape[2]), dtype='uint8')
 #splitby the x, y axis 50%, 25%, 25% into train, test, val
