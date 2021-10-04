@@ -26,8 +26,8 @@ def train(model, raw_dataset, iteration, batch_size, loss):
     # hard set voxel_size
     voxel_size = gp.Coordinate((5, 1, 1))
     # set inpust size in voxel
-    input_size = gp.Coordinate((20, 100, 100)) * voxel_size
-    output_size = gp.Coordinate((20, 100, 100)) * voxel_size
+    input_size = gp.Coordinate((20, 128, 128)) * voxel_size
+    output_size = gp.Coordinate((20, 128, 128)) * voxel_size
 
     # how much to pad
     context = (input_size - output_size) / 2
@@ -49,21 +49,16 @@ def train(model, raw_dataset, iteration, batch_size, loss):
     source = tuple(
         gp.ZarrSource(
             raw_dataset,  # the zarr container
-            {raw: "raw"},  # which dataset to associate to the array key
-            {raw: gp.ArraySpec(interpolatable=True)},  # meta-information
-            {gt: "gt"},
-            {gt: gp.ArraySpec(interpolatable=False)},
-            {mask: "gt"},
-            {mask: gp.ArraySpec(interpolatable=False)},
-        )
-        +
-        # add pad here
-        gp.Pad(raw, None)
+            {raw: "raw",
+            gt: "gt",
+            mask: 'mask'},  # which dataset to associate to the array key
+            {raw: gp.ArraySpec(interpolatable=True),  # meta-information
+            gt: gp.ArraySpec(interpolatable=False),
+            mask: gp.ArraySpec(interpolatable=False)})
+        + gp.Pad(raw, None)         # add pad here
         + gp.Pad(gt, context)
         + gp.Pad(mask, context)
-        +
-        # create random location
-        gp.RandomLocation()
+        + gp.RandomLocation() # create random location
     )
 
     print("Start augmentation")

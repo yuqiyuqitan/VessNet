@@ -18,8 +18,8 @@ def predict(model, raw_dataset, out_fname = 'predict.hdf5', eval=True, output_di
 
     im_size = zarr.open(raw_dataset,'r')[raw_ak_name].shape
     voxel_size = gp.Coordinate((5, 1, 1))
-    input_size = gp.Coordinate((20,100,100)) * voxel_size
-    output_size = gp.Coordinate((20,100,100)) * voxel_size 
+    input_size = gp.Coordinate((20,128,128)) * voxel_size
+    output_size = gp.Coordinate((20,128,128)) * voxel_size 
     #how much to pad
     context = (input_size - output_size)/2
 
