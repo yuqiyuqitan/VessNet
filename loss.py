@@ -31,7 +31,7 @@ class WeightedDiceCoefficient(nn.Module):
         denominator = (prediction * prediction).sum() + (groundtruth * groundtruth).sum()
         return 1-(2 * intersection / denominator.clamp(min=self.eps))
 
-def loss(prediction, groundtruth, weight_mask):
+def loss_combined(prediction, groundtruth, weight_mask):
     BCEloss = WeightedBCELoss()
     Diceloss = WeightedDiceCoefficient()
     groundtruth = groundtruth.float()
@@ -39,4 +39,20 @@ def loss(prediction, groundtruth, weight_mask):
     #print(prediction.type(), groundtruth.type(), weight_mask.type())
     loss = BCEloss (prediction = prediction, groundtruth = groundtruth, weight_mask=weight_mask)+ \
         Diceloss (prediction = prediction, groundtruth = groundtruth, weight_mask=weight_mask)
+    return loss
+
+def loss_dice(prediction, groundtruth, weight_mask):
+    Diceloss = WeightedDiceCoefficient()
+    groundtruth = groundtruth.float()
+    weight_mask = weight_mask.float()
+    #print(prediction.type(), groundtruth.type(), weight_mask.type())
+    loss = Diceloss (prediction = prediction, groundtruth = groundtruth, weight_mask=weight_mask)
+    return loss
+
+def loss_bce(prediction, groundtruth, weight_mask):
+    BCEloss = WeightedBCELoss()
+    groundtruth = groundtruth.float()
+    weight_mask = weight_mask.float()
+    #print(prediction.type(), groundtruth.type(), weight_mask.type())
+    loss = BCEloss (prediction = prediction, groundtruth = groundtruth, weight_mask=weight_mask)
     return loss

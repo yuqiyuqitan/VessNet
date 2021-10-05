@@ -17,7 +17,7 @@ from train_node import TrainImageTb
 import glob
 import time
 
-def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, voxel_size = gp.Coordinate((5, 1, 1)), train = False, save_every=5, batch_size=50):
+def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, voxel_size = gp.Coordinate((5, 1, 1)), train = False, save_every=5, batch_size=50, scaling_factor=(1.0,1.0), noise_yes=True):
     # set the model to be in the training mode
     if train:
         model.train()
@@ -84,6 +84,7 @@ def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, vo
         prob_shift=0,
         max_misalign=0,
         spatial_dims=2,
+        scale_interval=scaling_factor,
     )
 
     # fliping augmentation
@@ -100,12 +101,15 @@ def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, vo
     )
 
     # noise aumentation
-    noise_augment = NoiseAugmentRange(raw)
 
     # scale augumentation (resolution) ? 
 
     # complete the augmentation
-    pipeline = pipeline + simple_augmentation + intensity_augmentation + noise_augment
+    if noise_yes:
+        noise_augment = NoiseAugmentRange(raw)
+        pipeline = pipeline + simple_augmentation + intensity_augmentation + noise_augment
+    else: 
+        pipeline = pipeline + simple_augmentation + intensity_augmentation
 
     # stack batch size
     pipeline += gp.Stack(batch_size)

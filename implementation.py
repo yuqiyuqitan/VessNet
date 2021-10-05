@@ -5,7 +5,7 @@ from VessNet_architecture import VessNet
 import gunpowder as gp
 from gp_train import get_pipeline
 from imshow import imshow
-from loss import loss
+from loss import loss_combined, loss_bce, loss_dice
 import logging
 
 logging.basicConfig(level = logging.INFO)
