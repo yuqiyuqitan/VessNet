@@ -35,7 +35,7 @@ pred = gp.ArrayKey("PRED")
 #pipeline = get_pipeline(raw_data = raw_dataset, input_size = input_size, output_size = output_size, train=False)
 
 model = VessNet()
-
+loss = loss_combined
 #this train
 pipeline = get_pipeline(train_dir = train_dir, model = model, loss=loss, input_size = input_size, output_size = output_size, train=True)
 
