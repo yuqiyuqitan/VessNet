@@ -124,13 +124,15 @@ def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, vo
                 "input": raw,
             },
             loss_inputs={0: pred, 1: gt, 2: mask},
-            outputs={0: pred}
+            outputs={0: pred},
+            save_every = 400,
+            log_every = 10
         )
         pipeline += gp.Snapshot(
             dataset_names = {raw: "raw", gt: "gt", pred: "pred"},
             output_dir='train_snapshot',
             output_filename = 'batch_{iteration}.zarr',
-            every = 20
+            every = 100
         )
     else:    
         pipeline += gp.Snapshot(
