@@ -17,7 +17,7 @@ from train_node import TrainImageTb
 import glob
 import time
 
-def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, voxel_size = gp.Coordinate((5, 1, 1)), train = False, save_every=5, iteration = 10, batch_size=5):
+def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, voxel_size = gp.Coordinate((5, 1, 1)), train = False, save_every=5, batch_size=50):
     # set the model to be in the training mode
     if train:
         model.train()
