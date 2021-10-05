@@ -138,6 +138,7 @@ def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, vo
             output_filename = 'batch_{iteration}.zarr',
             every = 25
         )
+        pipeline += gp.PrintProfilingStats(every=25)
         
     else:    
         pipeline += gp.Snapshot(
