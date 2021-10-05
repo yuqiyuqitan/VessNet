@@ -3,7 +3,7 @@ import skimage
 from gunpowder.batch_request import BatchRequest
 from gunpowder.nodes.batch_filter import BatchFilter
 
-class NoiseAugment(BatchFilter):
+class NoiseAugmentRange(BatchFilter):
     '''Add random noise to an array. Uses the scikit-image function skimage.util.random_noise.
     See scikit-image documentation for more information on arguments and additional kwargs.
     Args:
@@ -18,11 +18,12 @@ class NoiseAugment(BatchFilter):
             scikit-image documentation
     '''
 
-    def __init__(self, array, mode='gaussian', seed=None, clip=True, **kwargs):
+    def __init__(self, array, mode='gaussian', seed=None, clip=True, var_range=[0,0.01], **kwargs):
         self.array = array
         self.mode = mode
         self.seed = seed
         self.clip = clip
+        self.var_range = var_range
         self.kwargs = kwargs
 
     def setup(self):
@@ -38,7 +39,7 @@ class NoiseAugment(BatchFilter):
     def process(self, batch, request):
 
         raw = batch.arrays[self.array]
-        var = np.random.uniform()
+        var = np.random.uniform(self.var_range[0], self.var_range[1])
         assert raw.data.dtype == np.float32 or raw.data.dtype == np.float64, "Noise augmentation requires float types for the raw array (not " + str(raw.data.dtype) + "). Consider using Normalize before."
         assert raw.data.min() >= -1 and raw.data.max() <= 1, "Noise augmentation expects raw values in [-1,1] or [0,1]. Consider using Normalize before."
         raw.data = skimage.util.random_noise(

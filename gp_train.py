@@ -12,6 +12,7 @@ from skimage import filters
 import gunpowder as gp
 from gunpowder.torch import Train
 import math
+from noise_augment_node import NoiseAugmentRange
 
 
 def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, voxel_size = gp.Coordinate((5, 1, 1)), train = False, save_every=5, iteration = 10, batch_size=5):
@@ -55,7 +56,9 @@ def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, vox
         + gp.Pad(gt, context)
         + gp.Pad(mask, context)
         + gp.RandomLocation()  # create random location
+        
     )
+
 
     print("Start augmentation")
     # rotation augmentation
@@ -70,7 +73,7 @@ def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, vox
     )
 
     # fliping augmentation
-    simple_augmentation = gp.SimpleAugment([1, 2], [1, 2])
+    simple_augmentation = gp.SimpleAugment([1,2], [1,2])
 
     # intensity augumentation
     intensity_augmentation = gp.IntensityAugment(
@@ -83,7 +86,7 @@ def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, vox
     )
 
     # noise aumentation
-    noise_augment = gp.NoiseAugment(raw)
+    noise_augment = NoiseAugmentRange(raw)
 
     # scale augumentation (resolution) ? 
 
@@ -92,6 +95,9 @@ def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, vox
 
     # stack batch size
     pipeline += gp.Stack(batch_size)
+
+    pipeline += gp.Unsqueeze([raw, gt, mask],1)
+
     if train:
         print("Start training")
         # training loop
@@ -102,8 +108,13 @@ def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, vox
             inputs={
                 "input": raw,
             },
-            loss_inputs={0: pred, 1: gt},
+            loss_inputs={0: pred, 1: gt, 2: mask},
             outputs={0: pred},
+        )
+        pipeline += gp.Snapshot(
+            dataset_names = {raw: "raw", gt: "gt", pred: "pred"},
+            output_dir='train_snapshot',
+            output_filename = 'batch_{iteration}.zarr'
         )
     else:    
         pipeline += gp.Snapshot(

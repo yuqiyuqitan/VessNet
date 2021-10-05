@@ -17,9 +17,10 @@ viewer = neuroglancer.Viewer()
 
 with viewer.txn() as s:
 
-    for ds_name in ['raw_aug','gt_aug']:
-
+    #for ds_name in ['raw_aug','gt_aug']:
+    for ds_name in ['raw','gt']:
         data = f[ds_name][:]
+        data = np.squeeze(data)
         offset = f[ds_name].attrs['offset']
         resolution = f[ds_name].attrs['resolution']
 
@@ -39,8 +40,5 @@ with viewer.txn() as s:
 
 print(viewer)
 
-        
-
-
-
+input()
 
