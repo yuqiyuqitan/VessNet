@@ -55,7 +55,7 @@ def predict(model, raw_dataset, out_fname = 'predict.hdf5', eval=True, output_di
 
     #predict 
     # add a predict node
-    pipeline += gp.tensorflow.Predict(
+    pipeline += gp.torch.Predict(
         model,
         input = {
             'input':raw

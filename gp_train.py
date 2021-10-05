@@ -13,9 +13,10 @@ import gunpowder as gp
 from gunpowder.torch import Train
 import math
 from noise_augment_node import NoiseAugmentRange
+from train_node import TrainImageTb
+import glob
 
-
-def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, voxel_size = gp.Coordinate((5, 1, 1)), train = False, save_every=5, iteration = 10, batch_size=5):
+def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, voxel_size = gp.Coordinate((5, 1, 1)), train = False, save_every=5, iteration = 10, batch_size=5):
     # set the model to be in the training mode
     if train:
         model.train()
@@ -36,9 +37,23 @@ def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, vox
     request.add(gt, output_size)
     request.add(mask, output_size)
 
+    fnames = os.listdir(train_dir)
+    sizes = []
+    
+    fnames_deepVess = glob.glob(os.path.join(train_dir, "001*.zarr"))   
+    for fname in fnames:
+        tmp = zarr.open(os.path.join(train_dir, fname), 'r')
+        if tmp['raw'].dtype == "float64":
+            print(fname)
+        print(tmp['raw'].dtype)
+        size = np.sum(tmp['mask'])
+        if os.path.join(train_dir, fname) in fnames_deepVess:
+            size /= len(fnames_deepVess)
+        sizes.append(size)
+    
     print("Load data")
-    source = gp.ZarrSource(
-        raw_data,  # the zarr container
+    source = tuple(gp.ZarrSource(
+        os.path.join(train_dir,raw_data),  # the zarr container
         {
             raw: "raw",
             gt: "gt",
@@ -48,17 +63,18 @@ def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, vox
             raw: gp.ArraySpec(interpolatable=True),  # meta-information
             gt: gp.ArraySpec(interpolatable=False),
             mask: gp.ArraySpec(interpolatable=False)
-        },
-    )
-
-    source += (
-        gp.Pad(raw, None)
+        })
+        + gp.Pad(raw, None)
         + gp.Pad(gt, context)
         + gp.Pad(mask, context)
-        + gp.RandomLocation()  # create random location
-        
+        + gp.RandomLocation()  # create random location 
+        for raw_data in fnames
     )
+    # randomly choose a sample
+    pipeline = source
 
+    # choose sample based on probablities
+    pipeline += gp.RandomProvider(probabilities=sizes)
 
     print("Start augmentation")
     # rotation augmentation
@@ -91,7 +107,7 @@ def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, vox
     # scale augumentation (resolution) ? 
 
     # complete the augmentation
-    pipeline = source + simple_augmentation + intensity_augmentation + noise_augment
+    pipeline = pipeline + simple_augmentation + intensity_augmentation + noise_augment
 
     # stack batch size
     pipeline += gp.Stack(batch_size)
@@ -101,9 +117,10 @@ def get_pipeline(raw_data, input_size, output_size, model = None, loss=None, vox
     if train:
         print("Start training")
         # training loop
-        pipeline += Train(
+        pipeline += TrainImageTb(
             model,
             loss,
+            show_log_im = True,
             optimizer=torch.optim.Adam(model.parameters()),
             inputs={
                 "input": raw,

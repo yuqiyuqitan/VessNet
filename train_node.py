@@ -11,7 +11,7 @@ from typing import Dict, Union, Optional
 logger = logging.getLogger(__name__)
 
 
-class Train(GenericTrain):
+class TrainImageTb(GenericTrain):
     """Torch implementation of :class:`gunpowder.nodes.GenericTrain`.
 
     Args:
@@ -114,7 +114,7 @@ class Train(GenericTrain):
             {k: v for k, v in loss_inputs.items() if v not in outputs.values()}
         )
 
-        super(Train, self).__init__(
+        super(TrainImageTb, self).__init__(
             inputs, outputs, gradients, array_specs, spawn_subprocess=spawn_subprocess
         )
 

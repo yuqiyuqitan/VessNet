@@ -9,7 +9,7 @@ from loss import loss
 #assert torch.cuda.is_available() #not sure
 #device = torch.device("cuda")
 
-raw_dataset = "/mnt/efs/woods_hole/danceParty/tiff_images/03_zarr_train/train/01_HaftJavaherian_DeepVess2018_training_1.zarr"
+train_dir = "/mnt/efs/woods_hole/danceParty/tiff_images/03_zarr_train/train/"
 # set manual seed
 # torch.manual_seed(888)
 
@@ -30,7 +30,7 @@ pred = gp.ArrayKey("PRED")
 model = VessNet()
 
 #this train
-pipeline = get_pipeline(raw_data = raw_dataset, model = model, loss=loss, input_size = input_size, output_size = output_size, train=True)
+pipeline = get_pipeline(train_dir = train_dir, model = model, loss=loss, input_size = input_size, output_size = output_size, train=True)
 
 request = gp.BatchRequest()
 request.add(raw, input_size * voxel_size)
