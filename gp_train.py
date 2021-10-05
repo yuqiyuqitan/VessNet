@@ -130,7 +130,8 @@ def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, vo
             loss_inputs={0: pred, 1: gt, 2: mask},
             outputs={0: pred},
             save_every = 100,
-            log_every = 5
+            log_every = 5,
+            log_dir='log'
         )
         pipeline += gp.Snapshot(
             dataset_names = {raw: "raw", gt: "gt", pred: "pred"},
