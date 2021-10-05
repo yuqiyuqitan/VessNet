@@ -22,6 +22,7 @@ def makeZarr(input_fname, output_dir="."):
     #read in data from h5 file
     file_raw = h5py.File(fname_raw, 'r')
     raw_data = np.array(file_raw['im']) #is this z, y, x? Yes, h5 files are formated z, y, x, augusto double checked
+    raw_data = raw_data.astype('float32')
 #     raw_data = raw_data[:15,:292,:154] # to test if stack is smaller than 20 z slices
 #    file_gt = h5py.File(fname_gt, 'r')
 #    raw_gt = np.array(file_gt['im'])
@@ -52,12 +53,12 @@ def makeZarr(input_fname, output_dir="."):
 #     print(raw_data.shape[0])
 
     # print(raw_data.shape[2])
-    print(output_dir)
+#     print(output_dir)
 
     f = zarr.open(output_dir+'/'+zarr_name, 'w')
-    f['raw'] = raw_data
+    f['raw'] = raw_data.astype('float32')
     f['raw'].attrs['resolution'] = (5,1,1)
-    f['mask'] = raw_mask
+    f['mask'] = raw_mask.astype('uint8')
     f['mask'].attrs['resolution'] = (5,1,1)
 
     

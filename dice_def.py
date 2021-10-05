@@ -5,6 +5,8 @@ import sys
 from skimage import metrics
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
+import torch.nn as nn
 
 assert torch.cuda.is_available()
 device = torch.device("cuda")
@@ -35,11 +37,25 @@ dice_metric = DiceCoefficient()
 # Average hausdorff distance
 # Balanced average hausdorff distance
 
+
+
+# recall = sklearn.metrics.recall_score(y_train, y_pred)
+# precision = sklearn.metrics.precision_score(y_train, y_pred)
+# f1 = sklearn.metrics.f1_score(y_train, y_pred)
+
+
+def calc_accuracy(y_pred, y_true):
+    y_pred=torch.ge(y_pred, 0.5)
+
+    return y_pred.eq(y_true).float().mean()
+
+
 # Returns a dictionary with average metrics with the keys: 'dice'
 def Getmetrics(model, loader, dice_metric):
     # reinitializing metric values
     dice_is = 0
     hausdorff_distance_is = 0
+    accuracy_is = 0
     # disable gradients during validation
     with torch.no_grad():
         for x, y in loader:
@@ -73,12 +89,15 @@ def Getmetrics(model, loader, dice_metric):
     
             hausdorff_distance_is += metrics.hausdorff_distance(prediction_binary, y_binary) # adds all hausdorff together
             #             print(hausdorff_distance_is)
+            
+            accuracy_is += calc_accuracy(prediction, y).item()
     
 #     print("Distance is: ",hausdorff_distance_is, len(loader))
     dice_is /= len(loader) # gets mean dice
     hausdorff_distance_is /= len(loader) #computes mean hausdorff
+    accuracy_is /= len(loader)
     
-    metrics_are = {'dice': dice_is, 'hausdorff' : hausdorff_distance_is}
+    metrics_are = {'dice': dice_is, 'hausdorff' : hausdorff_distance_is, 'accuracy' : accuracy_is}
     return metrics_are
 """
 Usage:

@@ -23,6 +23,7 @@ def makeZarr(input_fname, output_dir="."):
     file_raw = h5py.File(fname_raw, 'r')
     raw_data = np.array(file_raw['im']) #is this z, y, x? Yes, h5 files are formated z, y, x, augusto double checked
 #     raw_data = raw_data[:15,:292,:154] # to test if stack is smaller than 20 z slices
+    raw_data = raw_data.astype('float32')
     file_gt = h5py.File(fname_gt, 'r')
     raw_gt = np.array(file_gt['im'])
 #    print(raw_gt[0:1, 0:100, 50:51])
@@ -85,31 +86,32 @@ def makeZarr(input_fname, output_dir="."):
     if not os.path.exists(output_dir+'/val/'): os.makedirs(output_dir+'/val/') 
 
 
+    
 
-    f = zarr.open(output_dir+'./train/'+zarr_name, 'w')
-    f['raw'] = train_raw_data
+    f = zarr.open(output_dir+'/train/'+zarr_name, 'w')
+    f['raw'] = train_raw_data.astype('float32')
     f['raw'].attrs['resolution'] = (5,1,1)
-    f['gt'] = train_raw_gt
+    f['gt'] = train_raw_gt.astype('uint8')
     f['gt'].attrs['resolution'] = (5,1,1)
-    f['mask'] = train_raw_mask
+    f['mask'] = train_raw_mask.astype('uint8')
     f['mask'].attrs['resolution'] = (5,1,1)
 
 
-    f = zarr.open(output_dir+'./test/'+zarr_name, 'w')
-    f['raw'] = test_raw_data
+    f = zarr.open(output_dir+'/test/'+zarr_name, 'w')
+    f['raw'] = test_raw_data.astype('float32')
     f['raw'].attrs['resolution'] = (5,1,1)
-    f['gt'] = test_raw_gt
+    f['gt'] = test_raw_gt.astype('uint8')
     f['gt'].attrs['resolution'] = (5,1,1)
-    f['mask'] = test_raw_mask
+    f['mask'] = test_raw_mask.astype('uint8')
     f['mask'].attrs['resolution'] = (5,1,1)
 
 
-    f = zarr.open(output_dir+'./val/'+zarr_name, 'w')
-    f['raw'] = val_raw_data
+    f = zarr.open(output_dir+'/val/'+zarr_name, 'w')
+    f['raw'] = val_raw_data.astype('float32')
     f['raw'].attrs['resolution'] = (5,1,1)
-    f['gt'] = val_raw_gt
+    f['gt'] = val_raw_gt.astype('uint8')
     f['gt'].attrs['resolution'] = (5,1,1)
-    f['mask'] = val_raw_mask
+    f['mask'] = val_raw_mask.astype('uint8')
     f['mask'].attrs['resolution'] = (5,1,1)
 
     #store image in zarr container
