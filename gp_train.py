@@ -15,6 +15,7 @@ import math
 from noise_augment_node import NoiseAugmentRange
 from train_node import TrainImageTb
 import glob
+import time
 
 def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, voxel_size = gp.Coordinate((5, 1, 1)), train = False, save_every=5, iteration = 10, batch_size=5):
     # set the model to be in the training mode
@@ -43,9 +44,6 @@ def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, vo
     fnames_deepVess = glob.glob(os.path.join(train_dir, "001*.zarr"))   
     for fname in fnames:
         tmp = zarr.open(os.path.join(train_dir, fname), 'r')
-        if tmp['raw'].dtype == "float64":
-            print(fname)
-        print(tmp['raw'].dtype)
         size = np.sum(tmp['mask'])
         if os.path.join(train_dir, fname) in fnames_deepVess:
             size /= len(fnames_deepVess)
@@ -126,12 +124,13 @@ def get_pipeline(train_dir, input_size, output_size, model = None, loss=None, vo
                 "input": raw,
             },
             loss_inputs={0: pred, 1: gt, 2: mask},
-            outputs={0: pred},
+            outputs={0: pred}
         )
         pipeline += gp.Snapshot(
             dataset_names = {raw: "raw", gt: "gt", pred: "pred"},
             output_dir='train_snapshot',
-            output_filename = 'batch_{iteration}.zarr'
+            output_filename = 'batch_{iteration}.zarr',
+            every = 20
         )
     else:    
         pipeline += gp.Snapshot(

@@ -1,3 +1,4 @@
+from math import e
 from torch.utils.tensorboard import SummaryWriter
 import torch
 from VessNet_architecture import VessNet
@@ -5,6 +6,10 @@ import gunpowder as gp
 from gp_train import get_pipeline
 from imshow import imshow
 from loss import loss
+import logging
+
+logging.basicConfig(level = logging.INFO)
+gp.PrintProfilingStats(every=500)
 
 #assert torch.cuda.is_available() #not sure
 #device = torch.device("cuda")
@@ -18,6 +23,8 @@ voxel_size = gp.Coordinate((5, 1, 1))
 # set inpust size in voxel
 input_size = gp.Coordinate((20, 128, 128))
 output_size = gp.Coordinate((20, 128, 128))
+
+iterations = 1000000
 
 raw = gp.ArrayKey("RAW")
 gt = gp.ArrayKey("GT")
@@ -39,5 +46,6 @@ request.add(mask, output_size *  voxel_size)
 request.add(pred, output_size *  voxel_size)
 
 with gp.build(pipeline):
-    batch = pipeline.request_batch(request)
+    for i in range(iterations):
+        batch = pipeline.request_batch(request)
     

@@ -3,7 +3,7 @@ import gunpowder as gp
 import torch
 import os
 
-def predict(model, raw_dataset, out_fname = 'predict.hdf5', eval=True, output_dir = '.', raw_ak_name='raw'):
+def predict(model, val_dir, out_fname = 'predict.hdf5', eval=True, output_dir = '.', raw_ak_name='raw'):
     #set the model in evaluation mode
     model.eval()
 
@@ -31,24 +31,28 @@ def predict(model, raw_dataset, out_fname = 'predict.hdf5', eval=True, output_di
     if eval:
         scan_request.add(gt, output_size)
 
+    fnames = glob.glob(os.path.join(val_dir, "*.zarr"))   
+
     #load data and add padding
     if eval:
-        source=gp.ZarrSource(
-                raw_dataset,  # the zarr container
+        source=tuple(gp.ZarrSource(
+                os.path.join(val_dir, fname),  # the zarr container
                 {raw: 'raw'},  # which dataset to associate to the array key
                 {raw: gp.ArraySpec(interpolatable=True)},
                 {gt: 'gt'},
                 {gt: gp.ArraySpec(interpolatable=False)},
                 {mask: 'mask'},
-                {mask: gp.ArraySpec(interpolatable=False)})
-        source += gp.Pad(raw, None) + gp.Pad(mask, context) + gp.Pad(gt, context)            
+                {mask: gp.ArraySpec(interpolatable=False)}) +
+                gp.Pad(raw, None) + gp.Pad(mask, context) + gp.Pad(gt, context)
+                for fname in fnames
+        )            
     else:
-        source=gp.ZarrSource(
+        source=tuple(gp.ZarrSource(gp.ZarrSource(
                 raw_dataset,  # the zarr container
                 {raw: 'raw'},  # which dataset to associate to the array key
-                {raw: gp.ArraySpec(interpolatable=True)})
-        source += gp.Pad(raw, context)         
-
+                {raw: gp.ArraySpec(interpolatable=True)}) + gp.Pad(raw, context)         
+                for fname in fnames
+        )
     #random_location = gp.RandomLocation()
 
     pipeline = source
